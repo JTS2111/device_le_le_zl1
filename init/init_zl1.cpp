@@ -95,7 +95,7 @@ void vendor_load_properties()
     int rc;
 	int isLEX720 = 1;
 
-    rc = property_get("ro.slim.device", device);
+    rc = property_get("ro.cm.device", device);
     if (!rc || strncmp(device, "le_zl1", PROP_VALUE_MAX))
         return;
 

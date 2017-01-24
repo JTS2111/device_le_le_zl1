@@ -1,6 +1,6 @@
 # TS stuff
 
-ro.ts.build=ts-slim6-mm6.0-ST
+#ro.ts.build=ts-slim6-mm6.0-ST
 
 ro.config.product=le_zl1
 ro.config.le_hardware_version=HW_1.0.0

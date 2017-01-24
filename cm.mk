@@ -18,8 +18,8 @@ PRODUCT_RELEASE_NAME := le_zl1
 $(shell mkdir -p out/target/product/le_zl1/recovery/root)
 $(shell mkdir -p out/target/product/le_zl1/root)
 
-# Inherit some common Slim stuff.
-$(call inherit-product, vendor/slim/config/common_full_phone.mk)
+# Inherit some common stuff.
+$(call inherit-product, vendor/cm/config/common_full_phone.mk)
 
 # Inherit from those products. Most specific first.
 $(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit.mk)
@@ -30,7 +30,7 @@ $(call inherit-product, device/le/le_zl1/device.mk)
 
 PRODUCT_BRAND := LeEco
 PRODUCT_DEVICE := le_zl1
-PRODUCT_NAME := slim_le_zl1
+PRODUCT_NAME := cm_le_zl1
 PRODUCT_MANUFACTURER := LeMobile
 PRODUCT_MODEL := LEX720
 

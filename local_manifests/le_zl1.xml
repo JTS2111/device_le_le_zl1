@@ -1,31 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <manifest>
 	
-	<!-- Removals -->
-	<remove-project name="SlimRoms/hardware_qcom_display" />
-	<remove-project name="SlimRoms/packages_apps_Browser" />
-	<remove-project name="SlimRoms/frameworks_base" />
-	
 	<!-- Device -->
-  	<project path="device/le/le_zl1" name="ekkilm/Slim6_device_le_le_zl1" remote="github" revision="mm6.0" />
+  	<project path="device/le/le_zl1" name="corvusmod/Slim6_device_le_le_zl1" remote="github" revision="mm6.0" />
+  	<project path="device/qcom/common" name="LineageOS/android_device_qcom_common.git" remote="github" revision="cm-13.0" />
 
 	<!-- Kernel -->
-  	<project path="kernel/le/le_zl1" name="ekkilm/android_kernel_le_le_zl1" remote="github" revision="mm6.0" />
+  	<project path="kernel/le/le_zl1" name="corvusmod/android_kernel_le_le_zl1" remote="github" revision="mm6.0" />
   	
   	<!-- Frameworks base -->
-  	<project path="frameworks/base" name="ekkilm/Slim6_frameworks_base" remote="github" revision="mm6.0" />
+  	<!--<project path="frameworks/base" name="ekkilm/Slim6_frameworks_base" remote="github" revision="mm6.0" />-->
   	
-  	<!-- Curl needed -->
-	<project name="LineageOS/android_external_curl" path="external/curl" remote="github" revision="cm-13.0" />
-	
 	<!-- NFC -->
-	<project name="SlimRoms/vendor_nxp-nfc_opensource_frameworks" path="vendor/nxp-nfc/opensource/frameworks" remote="github" revision="mm6.0" />
-	<project name="SlimRoms/vendor_nxp-nfc_opensource_libnfc-nci" path="vendor/nxp-nfc/opensource/libnfc-nci" remote="github" revision="mm6.0" />
-	<project name="SlimRoms/vendor_nxp-nfc_opensource_Nfc" path="vendor/nxp-nfc/opensource/Nfc" remote="github" revision="mm6.0" />
+	<project name="LineageOS/android_vendor_nxp-nfc_opensource_frameworks.git" path="vendor/nxp-nfc/opensource/frameworks" remote="github" revision="cm-13.0" />
+	<project name="LineageOS/android_vendor_nxp-nfc_opensource_libnfc-nci.git" path="vendor/nxp-nfc/opensource/libnfc-nci" remote="github" revision="cm-13.0" />
+	<project name="LineageOS/android_vendor_nxp-nfc_opensource_Nfc.git" path="vendor/nxp-nfc/opensource/Nfc" remote="github" revision="cm-13.0" />
+
+        <!-- Busybox -->
+	<project name="LineageOS/android_external_busybox.git" path="external/busybox" remote="github" revision="cm-13.0" />
 	
-	<!-- Display -->
-	<project name="LineageOS/android_hardware_qcom_display" path="hardware/qcom/display-caf/msm8996" remote="github" revision="cm-13.0-caf-8996" />
-	
-	<!-- Browser from Lineage -->
-	<project name="LineageOS/android_packages_apps_Browser" path="packages/apps/Browser" remote="github" revision="cm-13.0" />
 </manifest>

@@ -416,7 +416,4 @@
     <string name="config_networkLocationProviderPackageName" translatable="false">com.qualcomm.location</string>
     <string name="config_fusedLocationProviderPackageName" translatable="false">com.qualcomm.location</string>
     
-    <!-- Proximity Check-->
-    <bool name="config_proximityCheckOnWake">true</bool>
-
 </resources>

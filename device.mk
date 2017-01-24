@@ -123,7 +123,7 @@ PRODUCT_BOOT_JARS += \
     org.ifaa.android.manager
 
 # TS
-PRODUCT_PACKAGES += \
+#PRODUCT_PACKAGES += \
 	TsExtra
 
 # Audio
@@ -176,6 +176,10 @@ PRODUCT_PACKAGES += \
 # Doze mode
 PRODUCT_PACKAGES += \
     Doze
+
+# Busybox 
+PRODUCT_PACKAGES += \
+    busybox
 
 # Fingerprint sensor
 PRODUCT_PACKAGES += \

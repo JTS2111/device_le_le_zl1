@@ -1,0 +1,13 @@
+diff --git a/src/com/android/settings/DevelopmentSettings.java b/src/com/android/settings/DevelopmentSettings.java
+index b5b89cb..d1371e1 100644
+--- a/src/com/android/settings/DevelopmentSettings.java
++++ b/src/com/android/settings/DevelopmentSettings.java
+@@ -215,7 +215,7 @@ public class DevelopmentSettings extends SettingsPreferenceFragment
+ 
+     private static final String MULTI_WINDOW_SYSTEM_PROPERTY = "persist.sys.debug.multi_window";
+ 
+-    private static final String SUPERUSER_BINARY_PATH = "/system/xbin/su";
++    private static final String SUPERUSER_BINARY_PATH = "/su/bin/su";
+ 
+     private IWindowManager mWindowManager;
+     private IBackupManager mBackupManager;

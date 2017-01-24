@@ -1,0 +1,357 @@
+diff --git a/core/java/android/hardware/ConsumerIrManager.java b/core/java/android/hardware/ConsumerIrManager.java
+index 6d29212..4a43d32 100644
+--- a/core/java/android/hardware/ConsumerIrManager.java
++++ b/core/java/android/hardware/ConsumerIrManager.java
+@@ -35,15 +35,18 @@ public final class ConsumerIrManager {
+     private static final String TAG = "ConsumerIr";
+ 
+     private final String mPackageName;
+-    private final IConsumerIrService mService;
++    //private final IConsumerIrService mService;
++	private final InfraredMagic mService = new InfraredMagic();
+ 
+     /**
+      * @hide to prevent subclassing from outside of the framework
+      */
+     public ConsumerIrManager(Context context) {
+         mPackageName = context.getPackageName();
+-        mService = IConsumerIrService.Stub.asInterface(
+-                ServiceManager.getService(Context.CONSUMER_IR_SERVICE));
++        //mService = IConsumerIrService.Stub.asInterface(
++        //        ServiceManager.getService(Context.CONSUMER_IR_SERVICE));
++		mService.setContext(context);
++		mService.bindQuickSetService();
+     }
+ 
+     /**
+diff --git a/core/java/android/hardware/camera2/legacy/GLThreadManager.java b/core/java/android/hardware/camera2/legacy/GLThreadManager.java
+index 152d82d..d90d221 100644
+--- a/core/java/android/hardware/camera2/legacy/GLThreadManager.java
++++ b/core/java/android/hardware/camera2/legacy/GLThreadManager.java
+@@ -102,7 +102,12 @@ public class GLThreadManager {
+                         if (!mConfigured) {
+                             Log.e(TAG, "Dropping frame, EGL context not configured!");
+                         }
+-                        mTextureRenderer.drawIntoSurfaces(mCaptureCollector);
++                        //mTextureRenderer.drawIntoSurfaces(mCaptureCollector);
++						try {
++                        	mTextureRenderer.drawIntoSurfaces(mCaptureCollector);
++						} catch (Exception e) {
++						    Log.e(TAG, "SKIP exception on GL render thread: ", e);
++						}
+                         break;
+                     case MSG_CLEANUP:
+                         mTextureRenderer.cleanupEGLContext();
+diff --git a/core/java/android/hardware/camera2/legacy/LegacyMetadataMapper.java b/core/java/android/hardware/camera2/legacy/LegacyMetadataMapper.java
+index 8bdd42a..0b664b4 100644
+--- a/core/java/android/hardware/camera2/legacy/LegacyMetadataMapper.java
++++ b/core/java/android/hardware/camera2/legacy/LegacyMetadataMapper.java
+@@ -321,6 +321,10 @@ public class LegacyMetadataMapper {
+             // Sort again, this time in descending order max->min
+             Collections.sort(previewSizes, Collections.reverseOrder(areaComparator));
+         }
++        
++        // TS
++        appendStreamConfig(availableStreamConfigs,
++                HAL_PIXEL_FORMAT_RGBA_8888, p.getSupportedVideoSizes());
+ 
+         appendStreamConfig(availableStreamConfigs,
+                 HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, previewSizes);
+diff --git a/core/java/android/hardware/camera2/legacy/RequestThreadManager.java b/core/java/android/hardware/camera2/legacy/RequestThreadManager.java
+index c26d07d..0586798 100644
+--- a/core/java/android/hardware/camera2/legacy/RequestThreadManager.java
++++ b/core/java/android/hardware/camera2/legacy/RequestThreadManager.java
+@@ -82,7 +82,7 @@ public class RequestThreadManager {
+     private static final int PREVIEW_FRAME_TIMEOUT = 1000; // ms
+     private static final int JPEG_FRAME_TIMEOUT = 4000; // ms (same as CTS for API2)
+     private static final int HDR_TIMEOUT = 20000; //ms
+-    private static final int REQUEST_COMPLETE_TIMEOUT = JPEG_FRAME_TIMEOUT;
++    private static final int REQUEST_COMPLETE_TIMEOUT = 100;//JPEG_FRAME_TIMEOUT;
+ 
+     private static final float ASPECT_RATIO_TOLERANCE = 0.01f;
+     private boolean mPreviewRunning = false;
+@@ -329,7 +329,7 @@ public class RequestThreadManager {
+         startPreview();
+     }
+ 
+-    private void configureOutputs(Collection<Pair<Surface, Size>> outputs) {
++    synchronized private void configureOutputs(Collection<Pair<Surface, Size>> outputs) {
+         if (DEBUG) {
+             String outputsStr = outputs == null ? "null" : (outputs.size() + " surfaces");
+             Log.d(TAG, "configureOutputs with " + outputsStr);
+@@ -349,16 +349,16 @@ public class RequestThreadManager {
+          * using a different one; this also reduces the likelihood of getting into a deadlock
+          * when disconnecting from the old previous texture at a later time.
+          */
+-        try {
+-            mCamera.setPreviewTexture(/*surfaceTexture*/null);
+-        } catch (IOException e) {
++        //try {
++        //    mCamera.setPreviewTexture(/*surfaceTexture*/null);
++        /*} catch (IOException e) {
+             Log.w(TAG, "Failed to clear prior SurfaceTexture, may cause GL deadlock: ", e);
+         } catch (RuntimeException e) {
+             Log.e(TAG, "Received device exception in configure call: ", e);
+             mDeviceState.setError(
+                     CameraDeviceImpl.CameraDeviceCallbacks.ERROR_CAMERA_DEVICE);
+             return;
+-        }
++        }*/
+ 
+         if (mGLThreadManager != null) {
+             mGLThreadManager.waitUntilStarted();
+@@ -480,6 +480,20 @@ public class RequestThreadManager {
+             mParams.setPictureSize(
+                     smallestSupportedJpegSize.getWidth(), smallestSupportedJpegSize.getHeight());
+         }
++        
++        // TS: Make sure buffer orientation is correct.
++		if (outputs != null) {
++            for (Pair<Surface, Size> outPair : outputs) {
++                Surface s = outPair.first;
++                Size outSize = outPair.second;
++                try {
++                    int format = LegacyCameraDevice.detectSurfaceType(s);
++                    LegacyCameraDevice.setSurfaceOrientation(s, facing, orientation);
++                } catch (LegacyExceptionUtils.BufferQueueAbandonedException e) {
++                    Log.w(TAG, "Surface abandoned, skipping...", e);
++                }
++            }
++        }
+ 
+         // TODO: Detect and optimize single-output paths here to skip stream teeing.
+         if (mGLThreadManager == null) {
+diff --git a/packages/Keyguard/src/com/android/keyguard/KeyguardUpdateMonitor.java b/packages/Keyguard/src/com/android/keyguard/KeyguardUpdateMonitor.java
+index 70a9f5c..63e0472 100644
+--- a/packages/Keyguard/src/com/android/keyguard/KeyguardUpdateMonitor.java
++++ b/packages/Keyguard/src/com/android/keyguard/KeyguardUpdateMonitor.java
+@@ -71,6 +71,13 @@ import java.util.Map.Entry;
+ 
+ import cyanogenmod.providers.CMSettings;
+ 
++import android.hardware.Sensor;
++import android.hardware.SensorEvent;
++import android.hardware.SensorEventListener;
++import android.hardware.SensorManager;
++import android.hardware.SystemSensorManager;
++import android.os.PowerManager;
++
+ import static android.os.BatteryManager.BATTERY_HEALTH_UNKNOWN;
+ import static android.os.BatteryManager.BATTERY_STATUS_FULL;
+ import static android.os.BatteryManager.BATTERY_STATUS_UNKNOWN;
+@@ -138,6 +145,8 @@ public class KeyguardUpdateMonitor implements TrustManager.TrustListener {
+     private static final int MSG_SERVICE_STATE_CHANGE = 330;
+     private static final int MSG_SCREEN_TURNED_ON = 331;
+     private static final int MSG_SCREEN_TURNED_OFF = 332;
++    
++    private static final int MSG_WAKE_UP = 350;
+ 
+     /** Fingerprint state: Not listening to fingerprint. */
+     private static final int FINGERPRINT_STATE_STOPPED = 0;
+@@ -276,6 +285,11 @@ public class KeyguardUpdateMonitor implements TrustManager.TrustListener {
+                 case MSG_SCREEN_TURNED_OFF:
+                     handleScreenTurnedOff();
+                     break;
++                    
++                case MSG_WAKE_UP:
++                    cleanupProximity();
++                    ((Runnable) msg.obj).run();
++                    break;
+             }
+         }
+     };
+@@ -425,19 +439,101 @@ public class KeyguardUpdateMonitor implements TrustManager.TrustListener {
+         }
+     }
+ 
+-    private void onFingerprintAuthenticated(int userId) {
+-        mUserFingerprintAuthenticated.put(userId, true);
++    private void cleanupProximity() {
++        if (mProximityWakeLock.isHeld()) {
++            try {
++	            mProximityWakeLock.release();
++			} catch (Exception e) {
++				Log.w(TAG, e);
++			}
++        }
++        if (mProximityListener != null) {
++            mSensorManager.unregisterListener(mProximityListener);
++            mProximityListener = null;
++        }
++    }
+ 
+-        // If fingerprint unlocking is allowed, this event will lead to a Keyguard dismiss or to a
+-        // wake-up (if Keyguard is not showing), so we don't need to listen until Keyguard is
+-        // fully gone.
+-        mFingerprintAlreadyAuthenticated = isUnlockingWithFingerprintAllowed();
+-        for (int i = 0; i < mCallbacks.size(); i++) {
+-            KeyguardUpdateMonitorCallback cb = mCallbacks.get(i).get();
+-            if (cb != null) {
+-                cb.onFingerprintAuthenticated(userId);
+-            }
++    private static final float PROXIMITY_NEAR_THRESHOLD = 5.0f;
++    private SensorManager mSensorManager;
++    private Sensor mProximitySensor;
++    android.os.PowerManager.WakeLock mProximityWakeLock;
++	SensorEventListener mProximityListener;
++	private PowerManager mPowerManager;
++
++	private void runPostProximityCheck(final Runnable r) {
++        if (mSensorManager == null) {
++            r.run();
++            return;
+         }
++        
++    if (!mProximityWakeLock.isHeld()) {
++        	mProximityWakeLock.acquire();
++		}
++
++        mProximityListener = new SensorEventListener() {
++            @Override
++            public void onSensorChanged(SensorEvent event) {
++				if (!mHandler.hasMessages(MSG_WAKE_UP)) {
++                    Log.w(TAG, "Fingerprint proximity sensor took too long, wake event already triggered!");
++                    return;
++                }
++				mHandler.removeMessages(MSG_WAKE_UP);
++
++                float distance = event.values[0];
++                if (distance >= PROXIMITY_NEAR_THRESHOLD || distance >= mProximitySensor.getMaximumRange()) {
++					Log.w(TAG, "Fingerprint waking up. Proximity sensor OK.");
++					// Let MSG_WAKE_UP release wakelock and handle wakeup
++					Message msg = mHandler.obtainMessage(MSG_WAKE_UP);
++        			msg.obj = r;
++		            msg.sendToTarget();
++                } else {
++                    Log.w(TAG, "Fingerprint Not waking up. Proximity sensor blocked.");
++					mFingerprintAlreadyAuthenticated = false;
++					sendKeyguardReset();
++                }
++            }
++
++            @Override
++            public void onAccuracyChanged(Sensor sensor, int accuracy) { }
++        };
++        mSensorManager.registerListener(mProximityListener,
++               mProximitySensor, SensorManager.SENSOR_DELAY_FASTEST);
++    
++    }
++
++    private void onFingerprintAuthenticated(int userId) {
++		final int _userId = userId;
++
++		Runnable mOnFingerprintAuthenticatedProximityCheckedRunnable = new Runnable() {
++		    @Override
++		    public void run() {
++				mUserFingerprintAuthenticated.put(_userId, true);
++
++				// If fingerprint unlocking is allowed, this event will lead to a Keyguard dismiss or to a
++				// wake-up (if Keyguard is not showing), so we don't need to listen until Keyguard is
++				// fully gone.
++				mFingerprintAlreadyAuthenticated = isUnlockingWithFingerprintAllowed();
++				for (int i = 0; i < mCallbacks.size(); i++) {
++				    KeyguardUpdateMonitorCallback cb = mCallbacks.get(i).get();
++				    if (cb != null) {
++				        cb.onFingerprintAuthenticated(_userId);
++				    }
++				}
++			}
++		};
++		
++		if (!isDeviceInteractive() ) {
++			if (mHandler.hasMessages(MSG_WAKE_UP)) {
++                // There is already a message queued;
++                return;
++            }
++			Message msg = mHandler.obtainMessage(MSG_WAKE_UP);
++            msg.obj = mOnFingerprintAuthenticatedProximityCheckedRunnable;
++            mHandler.sendMessageDelayed(msg, 100);
++			runPostProximityCheck(mOnFingerprintAuthenticatedProximityCheckedRunnable);
++		} else {
++			mOnFingerprintAuthenticatedProximityCheckedRunnable.run();
++		}
+     }
+ 
+     private void handleFingerprintAuthFailed() {
+@@ -1072,6 +1168,12 @@ public class KeyguardUpdateMonitor implements TrustManager.TrustListener {
+         if (mFpm != null) {
+             mFpm.addLockoutResetCallback(mLockoutResetCallback);
+         }
++        
++        // Initialize proximity sensor
++		mPowerManager = context.getSystemService(PowerManager.class);
++        mSensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
++       	mProximitySensor = mSensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
++		mProximityWakeLock = mPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "KeyguardProximityWakeLock");
+     }
+ 
+     private void updateFingerprintListeningState() {
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/policy/SuControllerImpl.java b/packages/SystemUI/src/com/android/systemui/statusbar/policy/SuControllerImpl.java
+index c663bab..537d51d 100644
+--- a/packages/SystemUI/src/com/android/systemui/statusbar/policy/SuControllerImpl.java
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/policy/SuControllerImpl.java
+@@ -28,6 +28,8 @@ import android.util.Log;
+ import java.util.ArrayList;
+ import java.util.List;
+ 
++import android.os.SystemProperties;
++
+ /**
+  * A controller to manage changes to superuser-related states and update the views accordingly.
+  */
+@@ -95,6 +97,7 @@ public class SuControllerImpl implements SuController {
+         List<String> packageNames = new ArrayList<>();
+         List<AppOpsManager.PackageOps> packages
+                 = mAppOpsManager.getPackagesForOps(mSuOpArray);
++
+         // AppOpsManager can return null when there is no requested data.
+         if (packages != null) {
+             final int numPackages = packages.size();
+diff --git a/services/core/java/com/android/server/power/PowerManagerService.java b/services/core/java/com/android/server/power/PowerManagerService.java
+index a197c6e..c3660d4 100644
+--- a/services/core/java/com/android/server/power/PowerManagerService.java
++++ b/services/core/java/com/android/server/power/PowerManagerService.java
+@@ -89,6 +89,8 @@ import java.util.Arrays;
+ import cyanogenmod.providers.CMSettings;
+ import libcore.util.Objects;
+ 
++import android.app.admin.DevicePolicyManager;
++
+ import static android.os.PowerManagerInternal.POWER_HINT_INTERACTION;
+ import static android.os.PowerManagerInternal.WAKEFULNESS_ASLEEP;
+ import static android.os.PowerManagerInternal.WAKEFULNESS_AWAKE;
+@@ -3288,7 +3290,11 @@ public final class PowerManagerService extends SystemService
+ 
+     private void cleanupProximityLocked() {
+         if (mProximityWakeLock.isHeld()) {
+-            mProximityWakeLock.release();
++            try {
++	            mProximityWakeLock.release();
++			} catch (Exception e) {
++				Slog.w(TAG, e);
++			}
+         }
+         if (mProximityListener != null) {
+             mSensorManager.unregisterListener(mProximityListener);
+@@ -3520,6 +3526,11 @@ public final class PowerManagerService extends SystemService
+ 
+             mContext.enforceCallingOrSelfPermission(
+                     android.Manifest.permission.DEVICE_POWER, null);
++                    
++            if ("android.policy:FINGERPRINT".equals(reason)) {
++				// No need to check, KeyguardUpdateMonitor did it already
++				checkProximity = false;
++			}
+ 
+             final int uid = Binder.getCallingUid();
+             Runnable r = new Runnable() {
+@@ -3601,7 +3612,8 @@ public final class PowerManagerService extends SystemService
+ 
+         @Override // Binder call
+         public void wakeUp(long eventTime, String reason, String opPackageName) {
+-            wakeUp(eventTime, reason, opPackageName, false);
++            //wakeUp(eventTime, reason, opPackageName, false);
++            wakeUp(eventTime, reason, opPackageName, true);
+         }
+ 
+         @Override // Binder call
