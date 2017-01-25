@@ -2,11 +2,12 @@
 <manifest>
 	
 	<!-- Device -->
-  	<project path="device/le/le_zl1" name="corvusmod/Slim6_device_le_le_zl1" remote="github" revision="mm6.0" />
+  	<project path="device/le/le_zl1" name="corvusmod/device_le_le_zl1" remote="github" revision="cm-13.0" />
+  	<project path="vendor/le/le_zl1" name="corvusmod/vendor_le_le_zl1" remote="github" revision="cm-13.0" />
   	<project path="device/qcom/common" name="LineageOS/android_device_qcom_common.git" remote="github" revision="cm-13.0" />
 
 	<!-- Kernel -->
-  	<project path="kernel/le/le_zl1" name="corvusmod/android_kernel_le_le_zl1" remote="github" revision="mm6.0" />
+  	<project path="kernel/le/le_zl1" name="corvusmod/android_kernel_le_le_zl1" remote="github" revision="cm-13.0" />
   	
   	<!-- Frameworks base -->
   	<!--<project path="frameworks/base" name="ekkilm/Slim6_frameworks_base" remote="github" revision="mm6.0" />-->
