@@ -288,3 +288,6 @@ ADDITIONAL_DEFAULT_PROPERTIES += ro.secure=0
 PRODUCT_SYSTEM_PROPERTY_BLACKLIST := \
     ro.product.model
 
+#Wifi Links
+$(shell ln -s /system/etc/wifi/WCNSS_qcom_cfg.ini $(OUT)/system/etc/firmware/wlan/qca_cld/WCNSS_qcom_cfg.ini)
+$(shell ln -s /persist/wlan_mac.bin $(OUT)/system/etc/firmware/wlan/qca_cld/wlan_mac.bin)

@@ -47,15 +47,15 @@ $(LOCAL_BUILT_MODULE): WCNSS_MAC_SYMLINK := $(TARGET_OUT)/etc/firmware/wlan/qca_
 
 $(LOCAL_BUILT_MODULE): $(LOCAL_PATH)/Android.mk
 $(LOCAL_BUILT_MODULE):
-	$(hide) echo "Making symlinks for wifi"
-	$(hide) mkdir -p $(dir $@)
-	$(hide) mkdir -p $(dir $(WCNSS_INI_SYMLINK))
-	$(hide) rm -rf $@
-	$(hide) rm -rf $(WCNSS_INI_SYMLINK)
-	$(hide) ln -sf $(ACTUAL_INI_FILE) $(WCNSS_INI_SYMLINK)
-	$(hide) rm -rf $(WCNSS_MAC_SYMLINK)
-	$(hide) ln -sf $(ACTUAL_MAC_FILE) $(WCNSS_MAC_SYMLINK)
-	$(hide) touch $@
+	@echo "Making symlinks for wifi"
+	@mkdir -p $(dir $@)
+	@mkdir -p $(dir $(WCNSS_INI_SYMLINK))
+	@rm -rf $@
+	@rm -rf $(WCNSS_INI_SYMLINK)
+	@ln -sf $(ACTUAL_INI_FILE) $(WCNSS_INI_SYMLINK)
+	@rm -rf $(WCNSS_MAC_SYMLINK)
+	@ln -sf $(ACTUAL_MAC_FILE) $(WCNSS_MAC_SYMLINK)
+	@touch $@
 
 include $(call all-makefiles-under,$(LOCAL_PATH))
 
