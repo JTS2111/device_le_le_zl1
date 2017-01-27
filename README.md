@@ -10,7 +10,7 @@ sudo apt-get install bison build-essential curl flex git gnupg gperf libesd0-dev
 
 Init repo
 
-repo init -u git://github.com/LegacyOS/android.git -b cm-13.0
+repo init -u git://github.com/LineageOS/android.git -b cm-13.0
 
 Sync
 
